@@ -190,6 +190,7 @@ gitlab-ml models download my-model \
 ### Python API
 
 ```python
+from pathlib import Path
 from gitlab_ml.api.client import get_gitlab_client
 from gitlab_ml.api.models import ModelRegistry
 
@@ -204,7 +205,14 @@ models = registry.list_models()
 registry.upload_version(
     model_name="my-model",
     version="1.0.0",
-    path="./model.pkl"
+    path=Path("./model.pkl")
+)
+
+# Download model
+registry.download_version(
+    model_name="ml-model-new",
+    version="1.2.2",
+    output_dir=Path("./downloaded_model")
 )
 ```
 

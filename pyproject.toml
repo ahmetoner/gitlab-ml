@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gitlab-ml"
-version = "0.1.0"
+version = "0.1.1"
 description = "CLI tool for managing machine learning models in GitLab's Model Registry"
 authors = ["Ahmet Öner"]
 readme = "README.md"
@@ -19,6 +19,7 @@ questionary = "^2.0.1"
 aiohttp = "^3.9.3"
 gql = {extras = ["aiohttp"], version = "^3.5.0"}
 python-dateutil = "^2.8.2"
+httpx = "^0.28.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
