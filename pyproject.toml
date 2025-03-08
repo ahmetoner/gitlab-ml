@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "gitlab-ml"
+version = "0.1.0"
+description = "CLI tool for managing machine learning models in GitLab's Model Registry"
+authors = ["Ahmet Öner"]
+readme = "README.md"
+packages = [{include = "gitlab_ml", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = {extras = ["all"], version = "^0.9.0"}
+rich = "^13.7.0"
+pydantic = "^2.6.1"
+pydantic-settings = "^2.1.0"
+python-gitlab = "^5.6.0"
+PyYAML = "^6.0.1"
+semver = "^3.0.2"
+questionary = "^2.0.1"
+aiohttp = "^3.9.3"
+gql = {extras = ["aiohttp"], version = "^3.5.0"}
+python-dateutil = "^2.8.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.5"
+pytest-cov = "^4.1.0"
+black = "^24.1.1"
+isort = "^5.13.2"
+mypy = "^1.8.0"
+ruff = "^0.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+gitlab-ml = "gitlab_ml.cli:app"
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.ruff]
+select = ["E", "F", "B", "I"]
+ignore = []
+line-length = 88 
