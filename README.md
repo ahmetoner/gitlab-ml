@@ -90,16 +90,13 @@ gitlab-ml models delete my-model --force
 
 ```bash
 # Upload a new model version
-gitlab-ml models upload my-model ./model.pkl \
-    --version "1.0.0"
+gitlab-ml models upload my-model 1.0.0 ./model.pkl
 
 # Upload a directory of model artifacts
-gitlab-ml models upload my-model ./model_dir \
-    --version "1.1.0"
+gitlab-ml models upload my-model 1.0.0 ./model_dir
 
 # Download a specific version
-gitlab-ml models download my-model \
-    --version "1.0.0" \
+gitlab-ml models download my-model 1.0.0 \
     --output ./models/
 ```
 

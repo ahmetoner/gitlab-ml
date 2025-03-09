@@ -86,8 +86,8 @@ def create_model(
 @app.command("upload")
 def upload_model(
     name: str = typer.Argument(..., help="Name of the model"),
+    version: str = typer.Argument(..., help="Version number (semver)"),
     path: Path = typer.Argument(..., help="Path to model file or directory"),
-    version: str = typer.Option(..., "--version", "-v", help="Version number (semver)"),
     message: Optional[str] = typer.Option(None, "--message", "-m", help="Version message"),
 ) -> None:
     """Upload a new version of a model."""
@@ -141,8 +141,8 @@ def upload_model(
 @app.command("download")
 def download_model(
     ctx: typer.Context,
-    name: str = typer.Option(..., "--name", "-n", help="Name of the model"),
-    version: str = typer.Option(..., "--version", "-v", help="Version to download"),
+    name: str = typer.Argument(..., help="Name of the model"),
+    version: str = typer.Argument(..., help="Version to download"),
     output: Optional[Path] = typer.Option(
         "downloads", "--output", "-o", help="Output directory"
     ),
@@ -204,13 +204,17 @@ def download_model(
 @app.command("delete")
 def delete_model(
     name: str = typer.Argument(..., help="Name of the model"),
+    version: Optional[str] = typer.Option(None, "--version", "-v", help="Version to delete (if not specified, deletes entire model)"),
     force: bool = typer.Option(
         False, "--force", "-f", help="Skip confirmation prompt"
     ),
 ) -> None:
-    """Delete a model from the registry."""
+    """Delete a model or specific version from the registry."""
     if not force:
-        confirm = typer.confirm(f"Are you sure you want to delete {name}?")
+        if version:
+            confirm = typer.confirm(f"Are you sure you want to delete version {version} of model {name}?")
+        else:
+            confirm = typer.confirm(f"Are you sure you want to delete model {name} and all its versions?")
         if not confirm:
             raise typer.Abort()
     
@@ -218,8 +222,11 @@ def delete_model(
     registry = ModelRegistry(client)
     
     try:
-        registry.delete_model(name)
-        console.print(f"🗑️  Deleted model: {name}")
+        registry.delete_model(name, version)
+        if version:
+            console.print(f"🗑️  Deleted version {version} of model {name}")
+        else:
+            console.print(f"🗑️  Deleted model {name} and all its versions")
     except ValueError as e:
         console.print(f"[red]{str(e)}[/]")
         raise typer.Exit(1)

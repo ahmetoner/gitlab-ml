@@ -242,15 +242,17 @@ class ModelRegistry:
     ) -> ModelVersion:
         """Upload a new version of a model."""
         artifacts = []
+        chunk_size = 8192  # 8KB chunks for better memory management
         
         try:
             # Create version in MLflow first
             try:
+                # Use source="/" since we're not using MLflow's artifact store
                 mlflow_version = self.mlflow_client.create_model_version(
                     model_name,
                     version,
                     description=message or "",
-                    tags={ "gitlab.version": version }
+                    tags={"gitlab.version": version}
                 )
                 logger.debug(f"Created MLflow version: {mlflow_version}")
             except Exception as e:
@@ -302,25 +304,33 @@ class ModelRegistry:
                         
                         logger.debug(f"Uploading to URL: {upload_url}")
                         
-                        # Upload file using ML Models API
-                        with file.open("rb") as f:
-                            # Use chunked upload to prevent memory issues
-                            chunk_size = 1024 * 1024  # 1MB chunks
-                            response = httpx.put(
-                                upload_url,
-                                headers=headers,
-                                content=iter(lambda: f.read(chunk_size), b""),
-                                timeout=None
-                            )
-                            response.raise_for_status()
+                        # Stream upload in chunks
+                        with open(file, 'rb') as f:
+                            uploaded_size = 0
+                            while True:
+                                chunk = f.read(chunk_size)
+                                if not chunk:
+                                    break
+                                    
+                                # Upload chunk
+                                response = httpx.put(
+                                    upload_url,
+                                    headers=headers,
+                                    content=chunk,
+                                    timeout=None
+                                )
+                                response.raise_for_status()
+                                
+                                uploaded_size += len(chunk)
+                                progress.update(file_task, completed=uploaded_size)
                         
-                        artifacts.append(artifact_name)  # Store original path
+                        artifacts.append(artifact_name)
                         progress.update(overall_task, advance=1)
                         progress.remove_task(file_task)
                 else:
                     # Single file upload
                     artifact_name = path.name
-                    task = progress.add_task(
+                    file_task = progress.add_task(
                         f"Uploading {artifact_name}...",
                         total=path.stat().st_size
                     )
@@ -335,17 +345,25 @@ class ModelRegistry:
                     
                     logger.debug(f"Uploading to URL: {upload_url}")
                     
-                    # Upload file using ML Models API
-                    with path.open("rb") as f:
-                        # Use chunked upload to prevent memory issues
-                        chunk_size = 1024 * 1024  # 1MB chunks
-                        response = httpx.put(
-                            upload_url,
-                            headers=headers,
-                            content=iter(lambda: f.read(chunk_size), b""),
-                            timeout=None
-                        )
-                        response.raise_for_status()
+                    # Stream upload in chunks
+                    with open(path, 'rb') as f:
+                        uploaded_size = 0
+                        while True:
+                            chunk = f.read(chunk_size)
+                            if not chunk:
+                                break
+                                
+                            # Upload chunk
+                            response = httpx.put(
+                                upload_url,
+                                headers=headers,
+                                content=chunk,
+                                timeout=None
+                            )
+                            response.raise_for_status()
+                            
+                            uploaded_size += len(chunk)
+                            progress.update(file_task, completed=uploaded_size)
                     
                     artifacts.append(artifact_name)
             
@@ -459,19 +477,40 @@ class ModelRegistry:
                 f"Failed to download version {version} of model {model_name}: {e}"
             )
     
-    def delete_model(self, name: str) -> None:
-        """Delete a model from the registry."""
+    def delete_model(self, model_name: str, version: Optional[str] = None) -> None:
+        """Delete a model or specific version from the registry.
+        
+        Args:
+            model_name: Name of the model
+            version: Optional version to delete. If None, deletes entire model
+        """
         try:
-            # Try to delete MLflow model and its versions first
-            self.mlflow_client.delete_registered_model(name=name)
-            logger.debug(f"Deleted model {name}")
-
-        except ValueError as e:
-            # Re-raise ValueError without wrapping
+            if version:
+                # Delete specific version
+                try:
+                    project_id, model_version_id, package_id = self._get_model_version_id(model_name, version)
+                    print(project_id, model_version_id, package_id)
+                    self.mlflow_client.delete_model_version(name=model_name, version=model_version_id)
+                    logger.debug(f"Deleted version {version} of model {model_name}")
+                except Exception as e:
+                    logger.error(f"Failed to delete version: {e}")
+                    raise ValueError(f"Failed to delete version {version} of model {model_name}: {e}")
+            else:
+                # Delete entire model
+                try:
+                    self.mlflow_client.delete_registered_model(name=model_name)
+                    logger.debug(f"Deleted model {model_name}")
+                except ValueError:
+                    raise
+                except Exception as e:
+                    logger.error(f"Failed to delete model: {e}")
+                    raise ValueError(f"Failed to delete model '{model_name}': Unexpected error occurred")
+                
+        except ValueError:
             raise
         except Exception as e:
-            logger.error(f"Failed to delete model: {e}")
-            raise ValueError(f"Failed to delete model '{name}': Unexpected error occurred")
+            logger.error(f"Failed to delete: {e}")
+            raise ValueError(f"Failed to delete: Unexpected error occurred")
     
     def _get_package_files_graphql(self, package_id: str) -> List[Dict]:
         """Get package files using GraphQL API."""
