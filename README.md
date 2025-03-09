@@ -191,15 +191,17 @@ from gitlab_ml.api.models import ModelRegistry
 
 # Initialize client with custom URL and token
 client = GitLabClient(
-    url="https://gitlab.example.com",  # Your GitLab instance URL
-    token="glpat-xxxxxxxxxxxx"         # Your GitLab personal access token
+    url="https://gitlab.com",
+    token="glpat-xxxxxxxxxxxx",
+    default_project="group/project"
 )
 registry = ModelRegistry(client)
 
 # Or use environment variables
 import os
-os.environ["GITLAB_URL"] = "https://gitlab.example.com"
-os.environ["GITLAB_TOKEN"] = "glpat-xxxxxxxxxxxx"
+os.environ["GITLAB_ML_URL"] = "https://gitlab.com"
+os.environ["GITLAB_ML_TOKEN"] = "glpat-xxxxxxxxxxxx"
+os.environ["GITLAB_ML_PROJECT"] = "group/project"
 client = get_gitlab_client()
 registry = ModelRegistry(client)
 
