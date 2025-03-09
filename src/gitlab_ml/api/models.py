@@ -390,6 +390,7 @@ class ModelRegistry:
     ) -> Path:
         """Download a specific version of a model."""
         output_dir = output_dir or Path.cwd()
+        output_dir = output_dir / model_name / version
         output_dir.mkdir(parents=True, exist_ok=True)
         chunk_size = 8192  # 8KB chunks for better memory management
         

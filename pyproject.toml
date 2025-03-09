@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gitlab-ml"
-version = "0.2.0"
+version = "0.2.1"
 description = "CLI tool for managing machine learning models in GitLab's Model Registry"
 authors = ["Ahmet Öner"]
 readme = "README.md"
