@@ -75,11 +75,9 @@ gitlab-ml models list
 gitlab-ml models list --format json
 gitlab-ml models list --format yaml
 
-# Create a new model with tags
+# Create a new model
 gitlab-ml models create my-model \
-    --description "My ML model" \
-    --tag "production" \
-    --tag "tensorflow"
+    --description "My ML model"
 
 # Delete a model (with confirmation)
 gitlab-ml models delete my-model

@@ -65,15 +65,22 @@ def list_models(
 @app.command("create")
 def create_model(
     name: str = typer.Argument(..., help="Name of the model"),
-    description: str = typer.Option("", "--description", "-d", help="Model description"),
-    tags: List[str] = typer.Option([], "--tag", "-t", help="Tags for the model"),
+    description: str = typer.Option("", "--description", "-d", help="Model description")
 ) -> None:
     """Create a new model in the registry."""
-    client = get_gitlab_client()
-    registry = ModelRegistry(client)
-    
-    model = registry.create_model(name=name, description=description, tags=tags)
-    console.print(f"✨ Created model: {model.name}")
+    try:
+        client = get_gitlab_client()
+        registry = ModelRegistry(client)
+        
+        model = registry.create_model(name=name, description=description)
+        console.print(f"✨ Created model: {model.name}")
+    except ValueError as e:
+        console.print(f"[red]Error: {str(e)}[/]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print("[red]Error: An unexpected error occurred[/]")
+        logger.error(f"Unexpected error: {e}")
+        raise typer.Exit(1)
 
 
 @app.command("upload")
@@ -141,44 +148,56 @@ def download_model(
     ),
 ) -> None:
     """Download a specific version of a model."""
-    client = get_gitlab_client()
-    registry = ModelRegistry(client)
-    
     try:
-        # First check if model exists
-        models = registry.list_models()
-        model = next((m for m in models if m.name == name), None)
-        if not model:
-            available_models = [m.name for m in models]
-            console.print(f"[red]Error: Model '{name}' not found[/]")
-            if available_models:
-                console.print("\nAvailable models:")
-                for m in sorted(available_models):
-                    console.print(f"  - {m}")
+        client = get_gitlab_client()
+        registry = ModelRegistry(client)
+        
+        try:
+            # First check if model exists
+            models = registry.list_models()
+            model = next((m for m in models if m.name == name), None)
+            if not model:
+                available_models = [m.name for m in models]
+                console.print(f"[red]Error: Model '{name}' not found[/]")
+                if available_models:
+                    console.print("\nAvailable models:")
+                    for m in sorted(available_models):
+                        console.print(f"  - {m}")
+                raise typer.Exit(1)
+            
+            # Then check if version exists
+            if not any(v.version == version for v in model.versions):
+                available_versions = [v.version for v in model.versions]
+                console.print(f"[red]Error: Version '{version}' not found for model '{name}'[/]")
+                if available_versions:
+                    console.print("\nAvailable versions:")
+                    for v in sorted(available_versions):
+                        console.print(f"  - {v}")
+                raise typer.Exit(1)
+            
+            # Download the version
+            path = registry.download_version(
+                model_name=name,
+                version=version,
+                output_dir=output,
+            )
+            console.print(f"📥 Downloaded {name} {version} to {path}")
+            
+        except typer.Exit:
+            raise
+        except Exception as e:
+            error_msg = str(e)
+            if "Cannot allocate memory" in error_msg:
+                console.print("[red]Error: Not enough memory to download the model. Try freeing up some memory and try again.[/]")
+            else:
+                console.print(f"[red]Error: {error_msg}[/]")
             raise typer.Exit(1)
-        
-        # Then check if version exists
-        if not any(v.version == version for v in model.versions):
-            available_versions = [v.version for v in model.versions]
-            console.print(f"[red]Error: Version '{version}' not found for model '{name}'[/]")
-            if available_versions:
-                console.print("\nAvailable versions:")
-                for v in sorted(available_versions):
-                    console.print(f"  - {v}")
-            raise typer.Exit(1)
-        
-        # Download the version
-        path = registry.download_version(
-            model_name=name,
-            version=version,
-            output_dir=output,
-        )
-        console.print(f"📥 Downloaded {name} {version} to {path}")
-        
+            
     except typer.Exit:
         raise
     except Exception as e:
-        console.print(f"[red]Error downloading model: {str(e)}[/]")
+        console.print("[red]Error: An unexpected error occurred[/]")
+        logger.error(f"Unexpected error: {e}")
         raise typer.Exit(1)
 
 

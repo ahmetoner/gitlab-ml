@@ -4,12 +4,15 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote, unquote
 
 import httpx
+import mlflow
+from mlflow.tracking import MlflowClient
 from dateutil.parser import parse as parse_date
 from gitlab.v4.objects import Project
 from gitlab_ml.api.client import GitLabClient
 from gitlab_ml.utils.logger import get_logger
 from pydantic import BaseModel
 from rich.progress import Progress
+import os
 
 logger = get_logger(__name__)
 
@@ -43,6 +46,15 @@ class ModelRegistry:
         """Initialize with GitLab client."""
         self.client = client
         self.project: Project = client.project
+        
+        # Configure MLflow with correct endpoint path
+        project_path = quote(self.project.path_with_namespace, safe='')
+        mlflow_uri = f"{self.client.client.url}/api/v4/projects/{project_path}/ml/mlflow"
+        logger.debug(f"Setting MLflow tracking URI: {mlflow_uri}")
+        
+        mlflow.set_tracking_uri(mlflow_uri)
+        os.environ["MLFLOW_TRACKING_TOKEN"] = self.client.client.private_token
+        self.mlflow_client = MlflowClient()
     
     def _graphql_query(self, query: str, variables: Optional[Dict] = None) -> dict:
         """Execute a GraphQL query against GitLab API."""
@@ -186,6 +198,41 @@ class ModelRegistry:
             logger.error(f"Failed to list models: {e}")
             raise ValueError(f"Failed to list models: {e}")
     
+    def create_model(
+        self,
+        name: str,
+        description: Optional[str] = None
+    ) -> Model:
+        """Create a new model in the registry."""
+        try:
+            # Create model in MLflow
+            try:
+                mlflow_model = self.mlflow_client.create_registered_model(
+                    name=name,
+                    description=description or ""
+                )
+                logger.debug(f"Created MLflow model: {mlflow_model}")
+            except Exception as e:
+                if "RESOURCE_ALREADY_EXISTS" in str(e):
+                    raise ValueError(f"Model '{name}' already exists")
+                logger.error(f"MLflow model creation failed: {e}")
+                raise ValueError(f"Failed to create model: {str(e).split(':')[0]}")
+            
+            # Create model metadata
+            model = Model(
+                name=name,
+                versions=[]
+            )
+            
+            return model
+            
+        except ValueError as e:
+            # Re-raise ValueError with clean message
+            raise ValueError(str(e))
+        except Exception as e:
+            logger.error(f"Failed to create model: {e}")
+            raise ValueError("An unexpected error occurred while creating the model")
+    
     def upload_version(
         self,
         model_name: str,
@@ -197,6 +244,20 @@ class ModelRegistry:
         artifacts = []
         
         try:
+            # Create version in MLflow first
+            try:
+                mlflow_version = self.mlflow_client.create_model_version(
+                    model_name,
+                    version,
+                    description=message or "",
+                    tags={ "gitlab.version": version }
+                )
+                logger.debug(f"Created MLflow version: {mlflow_version}")
+            except Exception as e:
+                logger.error(f"MLflow version creation failed: {e}")
+                # Continue with GitLab upload even if MLflow fails
+                pass
+            
             # Get project ID and model version ID
             project_id, model_version_id, packageId = self._get_model_version_id(model_name, version)
             
@@ -312,7 +373,7 @@ class ModelRegistry:
         """Download a specific version of a model."""
         output_dir = output_dir or Path.cwd()
         output_dir.mkdir(parents=True, exist_ok=True)
-        chunk_size = 1024 * 1024  # 1MB chunks
+        chunk_size = 8192  # 8KB chunks for better memory management
         
         try:
             # Get project ID, model version ID and package ID
@@ -362,7 +423,7 @@ class ModelRegistry:
                         
                         headers = {"Authorization": f"Bearer {self.client.client.private_token}"}
                         
-                        # Stream download in chunks
+                        # Stream download in small chunks
                         with httpx.stream("GET", download_url, headers=headers, follow_redirects=True) as response:
                             response.raise_for_status()
                             
