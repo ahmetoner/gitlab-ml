@@ -461,24 +461,11 @@ class ModelRegistry:
     
     def delete_model(self, name: str) -> None:
         """Delete a model from the registry."""
-        package_name = self._get_package_name(name)
-        
         try:
-            # Get all packages for this model
-            packages = self.project.packages.list(package_name=package_name)
-            
-            if not packages:
-                logger.debug(f"No packages found for model {name}")
-                raise ValueError(f"Model '{name}' not found in the registry")
-            
-            # Delete each package version
-            for package in packages:
-                try:
-                    self.project.packages.delete(package.id)
-                except Exception as e:
-                    logger.error(f"Failed to delete package {package.id}: {e}")
-                    raise ValueError(f"Failed to delete package {package.id}: {e}")
-                
+            # Try to delete MLflow model and its versions first
+            self.mlflow_client.delete_registered_model(name=name)
+            logger.debug(f"Deleted model {name}")
+
         except ValueError as e:
             # Re-raise ValueError without wrapping
             raise
