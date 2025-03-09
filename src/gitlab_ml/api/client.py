@@ -13,9 +13,34 @@ logger = get_logger(__name__)
 class GitLabClient:
     """GitLab API client wrapper."""
     
-    def __init__(self, config: Config) -> None:
-        """Initialize GitLab client with configuration."""
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        token: Optional[str] = None,
+        default_project: Optional[str] = None,
+        config: Optional[Config] = None,
+    ) -> None:
+        """Initialize GitLab client with configuration.
+        
+        Args:
+            url: GitLab instance URL. If not provided, will use config or environment variable.
+            token: GitLab personal access token. If not provided, will use config or environment variable.
+            default_project: Default GitLab project path. If not provided, will use config or environment variable.
+            config: Configuration object. If provided, will be used as fallback for missing parameters.
+        """
+        if config is None:
+            config = load_config()
+            
         self.config = config
+        
+        # Override config with direct parameters if provided
+        if url is not None:
+            self.config.gitlab.url = url
+        if token is not None:
+            self.config.gitlab.token = token
+        if default_project is not None:
+            self.config.gitlab.default_project = default_project
+            
         self._client: Optional[Gitlab] = None
     
     @property
@@ -56,13 +81,28 @@ class GitLabClient:
 _client_instance: Optional[GitLabClient] = None
 
 
-def get_gitlab_client(config: Optional[Config] = None) -> GitLabClient:
-    """Get or create a GitLab client instance."""
+def get_gitlab_client(
+    url: Optional[str] = None,
+    token: Optional[str] = None,
+    default_project: Optional[str] = None,
+    config: Optional[Config] = None,
+) -> GitLabClient:
+    """Get or create a GitLab client instance.
+    
+    Args:
+        url: GitLab instance URL. If not provided, will use config or environment variable.
+        token: GitLab personal access token. If not provided, will use config or environment variable.
+        default_project: Default GitLab project path. If not provided, will use config or environment variable.
+        config: Configuration object. If provided, will be used as fallback for missing parameters.
+    """
     global _client_instance
     
     if _client_instance is None:
-        if config is None:
-            config = load_config()
-        _client_instance = GitLabClient(config)
+        _client_instance = GitLabClient(
+            url=url,
+            token=token,
+            default_project=default_project,
+            config=config,
+        )
     
     return _client_instance 

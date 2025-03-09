@@ -186,10 +186,20 @@ gitlab-ml models download my-model 1.0.0 \
 
 ```python
 from pathlib import Path
-from gitlab_ml.api.client import get_gitlab_client
+from gitlab_ml.api.client import get_gitlab_client, GitLabClient
 from gitlab_ml.api.models import ModelRegistry
 
-# Initialize client
+# Initialize client with custom URL and token
+client = GitLabClient(
+    url="https://gitlab.example.com",  # Your GitLab instance URL
+    token="glpat-xxxxxxxxxxxx"         # Your GitLab personal access token
+)
+registry = ModelRegistry(client)
+
+# Or use environment variables
+import os
+os.environ["GITLAB_URL"] = "https://gitlab.example.com"
+os.environ["GITLAB_TOKEN"] = "glpat-xxxxxxxxxxxx"
 client = get_gitlab_client()
 registry = ModelRegistry(client)
 
