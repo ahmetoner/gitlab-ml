@@ -1,4 +1,15 @@
+
 # GitLab ML CLI
+
+<div align="center">
+  <img src="docs/assets/images/main.png" alt="GitLab ML CLI Logo" width="600">
+
+![Release](https://img.shields.io/github/v/release/ahmetoner/gitlab-ml.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/ahmetoner/gitlab-ml/publish.yml.svg)
+![Licence](https://img.shields.io/github/license/ahmetoner/gitlab-ml.svg)
+[![Total Downloads](https://img.shields.io/pypi/dw/gitlab-ml)](https://pepy.tech/project/gitlab-ml)
+
+</div>
 
 A command-line interface tool for managing machine learning models in GitLab's Model Registry. This tool provides a seamless experience for ML teams to version, track, and deploy their models using GitLab's infrastructure.
 
