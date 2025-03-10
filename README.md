@@ -2,7 +2,7 @@
 # GitLab ML CLI
 
 <div align="center">
-  <img src="docs/assets/images/main.png" alt="GitLab ML CLI Logo" width="600">
+  <img src="https://raw.githubusercontent.com/ahmetoner/gitlab-ml/refs/heads/main/docs/assets/images/main.png" alt="GitLab ML CLI Logo" width="600">
 
 ![Release](https://img.shields.io/github/v/release/ahmetoner/gitlab-ml.svg)
 ![Build](https://img.shields.io/github/actions/workflow/status/ahmetoner/gitlab-ml/publish.yml.svg)
@@ -42,7 +42,7 @@ poetry add gitlab-ml
 ### From Source
 
 ```bash
-git clone https://gitlab.com/ahmetoner/gitlab-ml.git
+git clone https://github.com/ahmetoner/gitlab-ml.git
 cd gitlab-ml
 poetry install
 ```
@@ -116,7 +116,7 @@ gitlab-ml models download my-model 1.0.0 \
 1. Clone the repository:
 
    ```bash
-   git clone https://gitlab.com/ahmetoner/gitlab-ml.git
+   git clone https://github.com/ahmetoner/gitlab-ml.git
    cd gitlab-ml
    ```
 
