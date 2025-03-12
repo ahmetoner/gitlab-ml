@@ -6,7 +6,7 @@
 
 ![Release](https://img.shields.io/github/v/release/ahmetoner/gitlab-ml.svg)
 ![Build](https://img.shields.io/github/actions/workflow/status/ahmetoner/gitlab-ml/publish.yml.svg)
-![Licence](https://img.shields.io/github/license/ahmetoner/gitlab-ml.svg)
+![Licence](https://img.shields.io/github/license/ahmetoner/gitlab-ml.svg?MIT)
 [![PyPI Downloads](https://static.pepy.tech/badge/gitlab-ml)](https://pepy.tech/projects/gitlab-ml)
 
 </div>
@@ -253,4 +253,4 @@ We welcome contributions! Please follow these steps:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/ahmetoner/gitlab-ml/blob/main/LICENSE) file for details.
