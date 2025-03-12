@@ -1,6 +1,6 @@
 [project]
 name = "gitlab-ml"
-version = "0.4.0"
+version = "0.4.1"
 description = "CLI tool for managing machine learning models in GitLab's Model Registry"
 requires-python = ">=3.9,<4.0"
 dependencies = [
