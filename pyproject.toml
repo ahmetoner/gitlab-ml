@@ -1,6 +1,6 @@
 [project]
 name = "gitlab-ml"
-version = "0.4.2"
+version = "0.5.0"
 description = "CLI tool for managing machine learning models in GitLab's Model Registry"
 requires-python = ">=3.9,<4.0"
 dependencies = [
@@ -32,6 +32,9 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[tool.poetry.scripts]
+gitlab-ml = "gitlab_ml.cli:app"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
